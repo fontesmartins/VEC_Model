@@ -202,5 +202,5 @@ df.2 %>%
   labs(x = '', y = '%',
        title = 'Desemprego - Vector Error Correction forecast',
        caption = 'Fonte: IBGE  e Ezequiel Martins')
-
+oi
 
