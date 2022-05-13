@@ -11,6 +11,4 @@
 
 
 
-
-![Captura de tela 2022-05-13 015233](https://user-images.githubusercontent.com/101497423/168214005-3a10facc-da39-49ca-a0e3-307c365c1b34.jpg)
-
+![VECM_gra](https://user-images.githubusercontent.com/101497423/168221608-5d277c7c-ca7f-4dda-82a0-303058d90e51.jpg)
