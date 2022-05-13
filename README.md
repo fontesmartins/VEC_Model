@@ -15,4 +15,5 @@ Utilizando o modelo previsão VEC em séries temporais, afim de verificar o efei
 
 
 
-![Captura de tela 2022-04-11 110156](https://user-images.githubusercontent.com/101497423/162758128-bc1be878-979a-45cf-a52f-f5493fcb622b.png)
+![Captura de tela 2022-05-13 015233](https://user-images.githubusercontent.com/101497423/168214005-3a10facc-da39-49ca-a0e3-307c365c1b34.jpg)
+
