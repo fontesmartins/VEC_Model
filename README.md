@@ -1,6 +1,5 @@
 # Vector Error Correction Forecasting Model
 
-Utilizando o modelo previsão VEC em séries temporais.
 
 
 
