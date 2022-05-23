@@ -33,7 +33,7 @@ fbcf <- fbcf_raw[,5] %>%
 
 
 
-## IPCA - SÃ©rie histÃ³rica com nÃºmero Ã­ndice - Dados do IBGE
+## IPCA - Série histórica com número índice - Dados do IBGE
 ipca <- get_sidra(api='/t/1737/n1/all/v/2266/p/all/d/v2266%2013') %>%
   pull(Valor) %>%
   ts(start=c(1979,12), end = c(2019,12), freq=12) %>%
@@ -54,13 +54,13 @@ selic <- GetBCBData::gbcbd_get_series(id= 4189,
 pnad.raw = get_sidra(api='/t/6318/n1/all/v/1641/p/all/c629/all')
 
 desocupada <- pnad.raw %>%
-  filter(`CondiÃ§Ã£o em relaÃ§Ã£o Ã  forÃ§a de trabalho e condiÃ§Ã£o de ocupaÃ§Ã£o (CÃ³digo)` == 32446) %>%
+  filter(`Condição em relação à força de trabalho e condição de ocupação (Código)` == 32446) %>%
   .[-length(pnad.raw),] %>%
   pull(Valor) %>% 
   ts(start=c(2012,03),end = c(2019,12), freq=12)  
 
 forca_de_trabalho <- pnad.raw %>%
-  filter(`CondiÃ§Ã£o em relaÃ§Ã£o Ã  forÃ§a de trabalho e condiÃ§Ã£o de ocupaÃ§Ã£o (CÃ³digo)` == 32386) %>%
+  filter(`Condição em relação à força de trabalho e condição de ocupação (Código)` == 32386) %>%
   .[-length(pnad.raw),] %>%
   pull(Valor) %>% 
   ts(start=c(2012,03),end = c(2019,12), freq=12)
@@ -72,7 +72,7 @@ desemprego = ts(desemprego[-1],start = c(2012,04), frequency = 12)
 
 
 
-## Juntando as sÃ©ries temporais
+## Juntando as séries temporais
 data_ts <- ts.intersect(desemprego, fbcf, selic, ipca) 
 
 df = as.data.frame(data_ts) %>%
@@ -100,7 +100,7 @@ v2 = df  %>%
   scale_x_date(breaks = date_breaks('1 year'),
                labels = date_format('%Y')) +
   labs(x = '', y = ' % 1995 = 100',
-       title = 'FormaÃ§Ã£o Bruta de Capital Fixo')
+       title = 'Formação Bruta de Capital Fixo')
 
 v3 = df  %>% 
   ggplot(aes(x = date)) + 
@@ -131,18 +131,19 @@ grid.arrange(v1,v2,v3,v4,
 
 
 ## Amostra de treino e teste
-intrain <- createDataPartition(data_ts[,1], p = .7, list = F)
-set.seed(2007)
-training.2 <- as.data.frame(data_ts[intrain,])
-testing.2 <- as.data.frame(data_ts[-intrain,])
+df = as.data.frame(data_ts) %>%
+  mutate(date = seq(as_date('2012-04-01'), as_date('2019-12-01'), 'month'))
+df$date <-  NULL
+training.2 = slice(df, -c(82:93))
+testing.2 = slice(df, c(82:93))
 
 
-## Testando cointegraÃ§Ã£o 
+## Testando cointegração 
 d <- VARselect(training.2, lag.max = 12, type = 'both')
 d$selection
 
 
-j.eigen <- ca.jo(training.2, type = 'eigen', K = 6,
+j.eigen <- ca.jo(training.2, type = 'eigen', K = 4,
                  ecdet = 'const',
                  spec = 'transitory',
                  season = 12)
@@ -152,55 +153,57 @@ summary(j.eigen)
 ## Criando modelo VEC
 vec = cajorls(j.eigen, r = 3)
 summary(vec$rlm)
+vec
 model.1 = vec2var(j.eigen, r = 3)
-
 
 
 # Arch Effects 
 arch = arch.test(model.1, lags.multi = 12, multivariate.only = T)
 arch
 
-# Normalidade dos resÃ­duos 
+# Normalidade dos resíduos 
 norm = normality.test(model.1)
 norm
-
-
+hist(model.1$resid)
 ## forecast 
-forecast <-  predict(model.1, n.ahead = nrow(testing), ci = .95)
+forecast <-  predict(model.1, n.ahead = nrow(testing.2), ci = 0.95)
 training <- ts(training.2, start = c(2012,04), freq= 12)
-testing <- ts(testing.2, start = c(2017,12), frequency = 12)
+testing <- ts(testing.2, start = c(2019,1), frequency = 12)
 
 f.cast_desemprego <- ts(forecast$fcst$desemprego, start = start(testing),
                         frequency = 12)
 autoplot(cbind(f.cast_desemprego, testing[,1]))
 
 
-## AvaliaÃ§Ã£o
+## Avaliação
 acc = accuracy(f.cast_desemprego, testing[,1])
 print(xtable::xtable(acc))
-
-
+acc
+xtable::xtable(acc)
 ## Visualizando 
 df.2 = as.data.frame(forecast$fcst$desemprego) %>%
-  mutate(date = seq(as_date('2017-12-01'), as_date('2019-12-01'), 'month')) %>%
+  mutate(date = seq(as_date('2019-01-01'), as_date('2019-12-01'), 'month')) %>%
   relocate(date) %>%
   rename(fitted=fcst)
 
 df.2$testing = testing.2$desemprego
 
+
+
 df.2 %>% 
   ggplot(aes(x = date)) + 
-  geom_line(aes(y = fitted, colour = 'Forecast'), size = 1.5) + 
-  geom_ribbon(aes(ymin = CI, ymax = upper), alpha = .5, fill = 'grey') + 
-  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = .5, fill = 'grey') +
-  geom_line(aes(y = testing, colour = 'Testing'), size = 1.5) +
+  geom_line(aes(y = fitted, colour = 'Forecast'), size = 1.2) + 
+  geom_ribbon(aes(ymin = lower, ymax = upper), alpha = .2, fill = 'grey') +
+  geom_line(aes(y = testing, colour = 'Testing'), size = 1.2) +
   theme(legend.position = c(.1,.2),
         plot.title = element_text(size = 18)) +
   scale_x_date(breaks = date_breaks('1 month'),
                labels = date_format('%m/%Y')) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1)) + 
   labs(x = '', y = '%',
-       title = 'Desemprego - Vector Error Correction forecast',
-       caption = 'Fonte: IBGE  e Ezequiel Martins')
+       title = 'Brazil Unemployment Rate Forecast',
+       subtitle = 'A Vector Error Correction Forecasting Model')
+
+
 
 
